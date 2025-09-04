@@ -3,6 +3,7 @@ from playwright.async_api import async_playwright
 import re
 from pathlib import Path
 import logging, sys
+import time
 
 BASE_DIR = Path(__file__).resolve().parent
 LOG_PATH = BASE_DIR / "g2b.log"
@@ -137,17 +138,8 @@ async def main():
             page = await context.new_page()
             await page.bring_to_front()
             try:
-                await page.goto('https://www.g2b.go.kr/')                
-                # 오늘하루닫기 체크박스 처리
-                try:
-                    await page.wait_for_selector('input[title="오늘 하루 이 창을 열지 않음"]', timeout=5000)
-                    checkboxes = await page.query_selector_all('input[title="오늘 하루 이 창을 열지 않음"]')
-                    for checkbox in checkboxes:
-                        await checkbox.click()
-                        await page.wait_for_timeout(300)
-                except:
-                    pass
-
+                await page.goto('https://www.g2b.go.kr/')               
+                
                 # 로그인
                 await page.click('a#mf_wfm_gnb_wfm_gnbTop_btnLogin')
                 await page.fill('input#mf_wfm_container_tabLgn_contents_content4_body_ibxLgnId', username)
