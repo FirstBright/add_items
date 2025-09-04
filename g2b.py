@@ -117,13 +117,27 @@ async def main():
     for id_line in ids:
         username, password = id_line.split()
         async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=False)
-            page = await browser.new_page()
-            screen_size = await page.evaluate('() => ({width: window.screen.width, height: window.screen.height})')
-            await page.set_viewport_size(screen_size)
+            browser = await p.chromium.launch(
+            headless=False,
+            args=[
+                "--force-device-scale-factor=1",
+                "--high-dpi-support=1",
+                "--disable-dev-shm-usage",
+                "--disable-renderer-backgrounding",
+            ],
+            )
+            context = await browser.new_context(
+                viewport={"width": 1920, "height": 1080},
+                device_scale_factor=1,
+                user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                           "(KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
+                locale="ko-KR",
+                timezone_id="Asia/Seoul",
+            )
+            page = await context.new_page()
+            await page.bring_to_front()
             try:
-                await page.goto('https://www.g2b.go.kr/')
-
+                await page.goto('https://www.g2b.go.kr/')                
                 # 오늘하루닫기 체크박스 처리
                 try:
                     await page.wait_for_selector('input[title="오늘 하루 이 창을 열지 않음"]', timeout=5000)
@@ -139,7 +153,7 @@ async def main():
                 await page.fill('input#mf_wfm_container_tabLgn_contents_content4_body_ibxLgnId', username)
                 await page.fill('input#mf_wfm_container_tabLgn_contents_content4_body_ibxLgnPswd', password)
                 await page.click('a#mf_wfm_container_tabLgn_contents_content4_body_btnLgn')
-
+                
                 # 보안 안내 팝업 Yes
                 try:
                     await page.click('input[id^="mf_wfm_container_tabLgn_contents_content4_body_confirm"][id$="_wframe_btnYes"]', timeout=5000)
