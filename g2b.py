@@ -1,12 +1,33 @@
 
 import asyncio
 from playwright.async_api import async_playwright
+import re
+
+def extract_item_codes(lines: list[str]) -> list[str]:
+    """한 줄에서 연속된 숫자 8~10자리를 추출"""
+    results = []
+    for line in lines:
+        m = re.search(r"\d{8,10}", line)
+        if m:
+            results.append(m.group())
+    return results
+
+def read_lines_any_encoding(path: str) -> list[str]:
+    encodings = ["utf-8-sig", "utf-8", "cp949", "euc-kr", "latin-1"]
+    for enc in encodings:
+        try:
+            with open(path, "r", encoding=enc, errors="strict") as f:
+                return [line.strip() for line in f if line.strip()]
+        except UnicodeDecodeError:
+            continue
+    # 마지막 안전망: 손실 허용
+    with open(path, "r", encoding="utf-8", errors="ignore") as f:
+        return [line.strip() for line in f if line.strip()]
 
 async def main():
-    with open('id.txt', 'r') as f:
-        ids = [line.strip() for line in f.readlines() if line.strip()]
-    with open('items.txt', 'r') as f:
-        items = [line.strip() for line in f.readlines() if line.strip()]
+    ids = read_lines_any_encoding("id.txt")
+    raw_items = read_lines_any_encoding("items.txt")
+    items = extract_item_codes(raw_items)
 
     for id_line in ids:
         username, password = id_line.split()
